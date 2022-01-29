@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+{% load static %}
+{% load bootstrap5 %}
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Ride Detail Page</title>
+</head>
+
+<body>
+    
+    <header>
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <!-- Container wrapper -->
+            <div class="container">
+                <!-- Navbar brand -->
+                <a class="navbar-brand me-2" href="{% url 'users:index' %}">
+                    Riding-Sharing-Service
+                </a>
+
+                <!-- Toggle button -->
+                <button class="navbar-toggler" type="button" data-mdb-toggle="collapse"
+                    data-mdb-target="#navbarButtonsExample" aria-controls="navbarButtonsExample" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <!-- Collapsible wrapper -->
+                <div class="collapse navbar-collapse" id="navbarButtonsExample">
+                    <!-- Left links -->
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Dashboard</a>
+                        </li>
+                    </ul>
+                    <!-- Left links -->
+
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <a href="{% url 'users:ride_request' %}">
+                                <button type="button" class="btn btn-secondary px-3 me-2">Request A Ride
+                                </button>
+                            </a>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton1"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                profile
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                <li><a class="dropdown-item" href="{% url 'users:profile' %}">My Profile</a></li>
+                                <li><a class="dropdown-item" href="{% url 'users:edit_profile' %}">Edit Profile</a></li>
+                                <li><a class="dropdown-item" href="{% url 'users:logout' %}">Log out</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- Collapsible wrapper -->
+            </div>
+            <!-- Container wrapper -->
+        </nav>
+        <!-- Navbar -->
+    </header>
+
+    <div class="container-xl px-4 mt-4">
+        <div class="row">
+            <div class="col-xl-8">
+                <!-- Account details card-->
+                <div class="card mb-4">
+                    <div class="card-header">Ride Detail
+                    {% if ride.owner_email != request.session.email %}
+                      (input your party passenger numbers to join the ride)
+                    {% endif %}
+                    </div>
+                    
+                    <div class="card-body">
+                        <form action="{% url 'users:ride_detail' slug=ride.ride_id %}" method="post">
+                            {% csrf_token %}
+                            {% if message %}
+                            <div class="alert alert-primary" id="message" data-dismiss="alert">
+                                {{message}}
+                            </div>
+                            {%endif%}
+                            <!-- Form Group (username)-->
+                            <div class="row gx-3 mb-3">
+                                <!-- Form Group (first name)-->
+                                <div class="col-md-6">
+                                    {{ ride_detail_form.ride_id.label }}
+                                    {{ ride_detail_form.ride_id }}
+                                </div>
+                                <!-- Form Group (last name)-->
+                                <div class="col-md-6">
+                                    {{ ride_detail_form.owner_email.label }}
+                                    {{ ride_detail_form.owner_email }}
+                                </div>
+                            </div>
+                            <div class="row gx-3 mb-3">
+                                <!-- Form Group (first name)-->
+                                <div class="col-md-6">
+                                    <label class="small mb-1" for="create_date">Ride Create Datetime</label>
+                                    <input class="form-control" id="create_date" type="text" readonly='readonly'
+                                        value=" {{ ride.create_date }} ">
+                                </div>
+                                <!-- Form Group (last name)-->
+                                <div class="col-md-6">
+                                    {{ ride_detail_form.status.label }}
+                                    {{ ride_detail_form.status }}
+                                </div>
+                            </div>
+                            <!-- Form Row-->
+                            {%if request.session.email != ride.owner_email or ride.status != 'open' %}
+                            <div class="row gx-3 mb-3">
+                                <div class="col-md-6">
+                                    <fieldset disabled="disabled">
+                                        {{ ride_detail_form.dest_addr.label }}
+                                        {{ ride_detail_form.dest_addr }}
+                                    </fieldset>
+                                </div>
+                                <div class="col-md-6">
+                                    <fieldset disabled="disabled">
+                                        {{ ride_detail_form.arrival_time.label }}
+                                        {{ ride_detail_form.arrival_time }}
+                                    </fieldset>
+                                </div>
+                            </div>
+                            {%else%}
+                            <div class="row gx-3 mb-3">
+                                <div class="col-md-6">
+                                    {{ ride_detail_form.dest_addr.label }}
+                                    {{ ride_detail_form.dest_addr }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ ride_detail_form.arrival_time.label }}
+                                    {{ ride_detail_form.arrival_time }}
+                                </div>
+                            </div>
+                            {%endif%}
+                            <div class="row gx-3 mb-3">
+                                <!-- Form Group (phone number)-->
+                                {% if ride.status != 'open' %}
+                                <div class="col-md-6">
+                                    <fieldset disabled="disabled">
+                                        {{ ride_detail_form.owner_num_passengers.label }}
+                                        {{ ride_detail_form.owner_num_passengers }}
+                                    </fieldset>
+                                </div>
+                                {%else%}
+                                <div class="col-md-6">
+                                    {{ ride_detail_form.owner_num_passengers.label }}
+                                    {{ ride_detail_form.owner_num_passengers }}
+                                </div>
+                                {%endif%}
+                                <!-- Form Group (birthday)-->
+                                <div class="col-md-6">
+                                    <!-- <label class="small mb-1" for="num_passengers">Ride Create Datetime</label>
+                                    <input class="form-control" id="num_passengers" type="text" readonly='readonly'
+                                        value=" {{ ride.num_passengers }} "> -->
+                                    {{ ride_detail_form.num_passengers.label }}
+                                    {{ ride_detail_form.num_passengers }}
+                                </div>
+                                {% if ride.owner_email != request.session.email or ride.status == "confirmed" %}
+                                <div class="col-md-6">
+                                    <!-- <label class="small mb-1" for="num_passengers">Ride Create Datetime</label>
+                                    <input class="form-control" id="num_passengers" type="text" readonly='readonly'
+                                        value=" {{ ride.num_passengers }} "> -->
+                                    <fieldset disabled="disabled">
+                                    {{ ride_detail_form.special_request.label }}
+                                    {{ ride_detail_form.special_request }}
+                                    </fieldset>
+                                </div>
+                                {%else%}
+                                <div class="col-md-6">
+                                    <!-- <label class="small mb-1" for="num_passengers">Ride Create Datetime</label>
+                                    <input class="form-control" id="num_passengers" type="text" readonly='readonly'
+                                        value=" {{ ride.num_passengers }} "> -->
+                                    {{ ride_detail_form.special_request.label }}
+                                    {{ ride_detail_form.special_request }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <!-- Form Group (email address)-->
+                            <div class="row gx-3 mb-3">
+                                <!-- Form Group (organization name)-->
+                                <div class="col-md-6">
+                                    {{ ride_detail_form.driver.label }}
+                                    {{ ride_detail_form.driver }}
+                                </div>
+                                <!-- Form Group (location)-->
+                                <div class="col-md-6">
+                                    {{ ride_detail_form.ride_plate.label }}
+                                    {{ ride_detail_form.ride_plate }}
+                                </div>
+                            </div>
+                            <!-- Form Row-->
+                            <div class="row gx-3 mb-3">
+                                <!-- Form Group (phone number)-->
+                                <div class="col-md-6">
+                                    {{ ride_detail_form.vehicle_type.label }}
+                                    {{ ride_detail_form.vehicle_type }}
+                                </div>
+                                <!-- Form Group (birthday)-->
+
+                            </div>
+
+                            {% if ride.sharable %}
+                            {% if sharers %}
+                            <div class="row gx-3 mb-3">
+                                <label class="small mb-1" for="sharers">Sharers (sharer's email and passenger number of
+                                    their party)</label>
+                                <text class="form-control" id="sharers" readonly='readonly'>
+                                    {% for sharer in sharers %}
+                                    ({{sharer.email}} : {{sharer.party_num_passengers}})
+                                    {% endfor %}
+                                </text>
+                            </div>
+                            {%else%}
+                            <div class="row gx-3 mb-3">
+                                <label class="small mb-1" for="sharers">Sharers (sharer's email and passenger number of
+                                    their party)</label>
+                                <text class="form-control" id="sharers" readonly='readonly'>
+                                    No sharers at this time
+                                </text>
+                            </div>
+                            {%endif%}
+                            {%else%}
+                            <div class="row gx-3 mb-3">
+                                <label class="small mb-1" for="sharers">Sharers (sharer's email and passenger number of
+                                    their party)</label>
+                                <text class="form-control" id="sharers" readonly='readonly'>
+                                    your order is not sharable
+                                </text>
+                            </div>
+                            {%endif%}
+                            {%if not joined and ride.status == "open"%}
+                            <div>
+                                <a href="{% url 'users:index' %}" type="button" class="btn btn-primary" name='Back'>Back
+                                    Home
+                                </a>
+                                <button type="submit" class="btn btn-primary" name='join'>Join
+                                </button>
+                            </div>
+                            {% elif ride.status == "open" and ride.owner_email == request.session.email %}
+                            <div>
+                                <a href="{% url 'users:index' %}" type="button" class="btn btn-primary" name='Back'>Back
+                                    Home
+                                </a>
+                                <button type="submit" class="btn btn-primary" name='save_change'>Save change
+                                </button>
+                                <button type="submit" class="btn btn-danger" name='cancel_order'>Cancel This Ride
+                                </button>
+                            </div>
+                            {% elif ride.status == "open" and ride.owner_email != request.session.email %}
+                            <div>
+                                <a href="{% url 'users:index' %}" type="button" class="btn btn-primary" name='Back'>Back
+                                    Home
+                                </a>
+                                <button type="submit" class="btn btn-primary" name='save_change'>Save change
+                                </button>
+                                <button type="submit" class="btn btn-danger" name='cancel_order'>Leave This
+                                    Ride
+                                </button>
+                            </div>
+                            {% elif ride.status == "confirmed"%}
+                            <div>
+                                <a href="{% url 'users:index' %}" type="button" class="btn btn-primary" name='Back'>Back
+                                    Home
+                                </a>
+                            </div>
+                            {%endif%}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
+
+<script>
+    $('#message').delay(1000).fadeOut('slow');
+</script>

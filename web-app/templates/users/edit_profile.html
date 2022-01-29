@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+{% load static %}
+{% load bootstrap5 %}
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Home Page</title>
+</head>
+
+<body>
+    <header>
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <!-- Container wrapper -->
+            <div class="container">
+                <!-- Navbar brand -->
+                <a class="navbar-brand me-2" href="{% url 'users:index' %}">
+                    Riding-Sharing-Service
+                </a>
+
+                <!-- Toggle button -->
+                <button class="navbar-toggler" type="button" data-mdb-toggle="collapse"
+                    data-mdb-target="#navbarButtonsExample" aria-controls="navbarButtonsExample" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <!-- Collapsible wrapper -->
+                <div class="collapse navbar-collapse" id="navbarButtonsExample">
+                    <!-- Left links -->
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Dashboard</a>
+                        </li>
+                    </ul>
+                    <!-- Left links -->
+
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <a href="{% url 'users:index' %}">
+                                <button type="button" class="btn btn-secondary px-3 me-2">Home Page
+                                </button>
+                            </a>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton1"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                profile
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                <li><a class="dropdown-item" href="{% url 'users:profile' %}">My Profile</a></li>
+                                <li><a class="dropdown-item" href="{% url 'users:edit_profile' %}">Edit Profile</a></li>
+                                <li><a class="dropdown-item" href="{% url 'users:logout' %}">Log out</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- Collapsible wrapper -->
+            </div>
+            <!-- Container wrapper -->
+        </nav>
+        <!-- Navbar -->
+    </header>
+    <div class="container rounded bg-white mt-2 mb-5">
+        {% if message %}
+        <div id="message" class="alert alert-primary" data-dismiss="alert">
+            {{message}}
+        </div>
+        {% endif %}
+        <div class="row">
+            <div class="col-md-3 border-right">
+                <div class="d-flex flex-column align-items-center text-center p-3 py-5"><img class="rounded-circle mt-5"
+                        width="150px"
+                        src="https://st3.depositphotos.com/15648834/17930/v/600/depositphotos_179308454-stock-illustration-unknown-person-silhouette-glasses-profile.jpg"><span
+                        class="font-weight-bold">{{ user.firstname }} {{ user.lastname }}</span>
+                    <span class="text-black-50">{{ user.email }}</span>
+                </div>
+            </div>
+            <div class="col-md-5 border-right">
+                <form action="{% url 'users:edit_profile' %}" method="post">
+                    {% csrf_token %}
+                    <div class="p-3 py-2">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="text-right">Profile Settings</h4>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                {{ edit_profile_form.firstname.label_tag }}
+                                {{ edit_profile_form.firstname }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ edit_profile_form.lastname.label_tag }}
+                                {{ edit_profile_form.lastname }}
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-12">
+                                {{ edit_profile_form.email.label_tag }}
+                                {{ edit_profile_form.email }}
+                            </div>
+                        </div>
+                        <div class="mt-3 text-right"><button class="btn btn-primary profile-button"
+                                type="submit">Save</button></div>
+                    </div>
+                </form>
+                <form action="{% url 'users:edit_profile' %}" method="post">
+                    {% csrf_token %}
+                    <div class="p-3 py-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="text-right">Change Password</h4>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-12">
+                                {{ change_password_form.old_password.label_tag }}
+                                {{ change_password_form.old_password }}
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                {{ change_password_form.new_password.label_tag }}
+                                {{ change_password_form.new_password }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ change_password_form.new_password2.label_tag }}
+                                {{ change_password_form.new_password2 }}
+                            </div>
+                        </div>
+                        <div class="mt-3 text-right"><button class="btn btn-primary profile-button"
+                                type="submit">Save</button></div>
+                </form>
+            </div>
+        </div>
+        {% if user.driver %}
+        <div class="col-md-4">
+            <form action="{% url 'users:edit_profile' %}" method="post">
+                {% csrf_token %}
+                <div class="p-3 py-5">
+                    <div class="d-flex justify-content-between align-items-center experience">
+                        <h5>Edit
+                            Your Vehicle Info</h5>
+                    </div><br>
+                    <div class="col-md-12">
+                        {{ edit_vehicle_form.plate.label }}
+                        {{ edit_vehicle_form.plate }}
+                    </div>
+                    <div class="col-md-12">
+                        {{ edit_vehicle_form.vehicle_type.label }}
+                        {{ edit_vehicle_form.vehicle_type }}
+                    </div>
+                    <div class="col-md-12">
+                        {{ edit_vehicle_form.num_passengers.label }}
+                        {{ edit_vehicle_form.num_passengers }}
+                    </div>
+                    <div class="col-md-12">
+                        {{ edit_vehicle_form.special_vehicle_info.label }}
+                        {{ edit_vehicle_form.special_vehicle_info }}
+                    </div>
+                    <div class="mt-3 text-right"><button class="btn btn-primary profile-button"
+                            type="submit">Save</button></div>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    <script>
+        $('#message').delay(1000).fadeOut('slow');
+    </script>
+</body>
+
+</html>
