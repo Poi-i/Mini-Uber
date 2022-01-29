@@ -154,7 +154,7 @@
   <script type="text/javascript">
     $('#datepicker').datetimepicker({
       step: 1,
-      startDate: getFormattedDate(new Date())
+      minDate: new Date()
     });
 
     function getFormattedDate(date) {
