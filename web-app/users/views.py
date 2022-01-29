@@ -413,8 +413,6 @@ def ride_detail(request, slug):
                 if owner_num_passengers <= 0:
                     message = "passenger number has to be bigger than 0"
                     joined = False
-                    ride.arrival_time = old_arrival_time
-                    ride.sharable = sharable
                 else:
                     ride.num_passengers += owner_num_passengers
                     ride_passenger = Ride_Passenger()
@@ -435,7 +433,15 @@ def ride_detail(request, slug):
             else:
                 message = "Passenger number must be positive!"
                 joined =  False
-                return render(request, 'users/ride_detail.html', locals())
+                ride.arrival_time = old_arrival_time
+                ride.dest_addr = old_dest_addr
+                ride.sharable = sharable
+                ride_detail_form = forms.RideDetailForm(
+                    initial={'ride_id': ride.ride_id, 'owner_email': ride.owner_email, 'dest_addr': ride.dest_addr, 'arrival_time': ride.arrival_time,
+                            'ride_plate': ride.ride_plate, 'sharable': ride.sharable, 'status': ride.status, 'create_date': ride.create_date,
+                            'num_passengers': ride.num_passengers, 'owner_num_passengers': party_number, 'driver': ride.driver, 'vehicle_type': ride.vehicle_type,
+                            'special_request': ride.special_request})
+                return render(request, 'users/ride_detail.html',{'ride': ride, 'ride_detail_form': ride_detail_form, 'message': message, 'joined': joined})
         elif "complete" in request.POST:
             ride.status = "complete"
             ride.save()

@@ -73,7 +73,7 @@ class RideRequestForm(forms.Form):
     sharable = forms.ChoiceField(label='Wanna share the trip?  ', choices=CHOICES,
                                  required=True, widget=forms.Select())
     num_passengers = forms.IntegerField( validators=[validate_positive],
-        label='number of passengers', required=True, widget=forms.NumberInput(attrs={'class': 'form-control', 'autocomplete': 'off'}))
+        label='number of passengers', required=True, widget=forms.NumberInput(attrs={'class': 'form-control', 'autocomplete': 'off', 'type':'number', 'min':'1'}))
     vehicle_type = forms.CharField(required=False,
                                    label='vehicle type', widget=forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'off'}))
     arrival_time = forms.DateTimeField(
@@ -105,7 +105,7 @@ class RideDetailForm(forms.ModelForm):
         self.fields['dest_addr'].widget.attrs['class'] = 'form-control'
         self.fields['arrival_time'].input_formats = ['%Y/%m/%d %H:%M']
         self.fields['arrival_time'].widget.attrs = {'class': 'form-control', 'id': 'id_arrival_time', 'autocomplete': 'off'}
-        self.fields['owner_num_passengers'].widget.attrs['class'] = 'form-control'
+        self.fields['owner_num_passengers'].widget.attrs = {'class': 'form-control', 'autocomplete': 'off', 'type':'number', 'min':'1'}
         self.fields['special_request'].widget.attrs['class'] = 'form-control'
 
         self.fields['num_passengers'].widget.attrs = {
