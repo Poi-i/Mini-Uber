@@ -72,7 +72,7 @@ class RideRequestForm(forms.Form):
                                 widget=forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'off'}))
     sharable = forms.ChoiceField(label='Wanna share the trip?  ', choices=CHOICES,
                                  required=True, widget=forms.Select())
-    num_passengers = forms.IntegerField(
+    num_passengers = forms.IntegerField( validators=[validate_positive],
         label='number of passengers', required=True, widget=forms.NumberInput(attrs={'class': 'form-control', 'autocomplete': 'off'}))
     vehicle_type = forms.CharField(required=False,
                                    label='vehicle type', widget=forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'off'}))
@@ -103,7 +103,8 @@ class RideDetailForm(forms.ModelForm):
         self.fields['status'].widget.attrs = {
             'readonly': 'readonly', 'class': 'form-control', 'autocomplete': 'off'}
         self.fields['dest_addr'].widget.attrs['class'] = 'form-control'
-        self.fields['arrival_time'].widget.attrs = {'class': 'form-control'}
+        self.fields['arrival_time'].input_formats = ['%Y/%m/%d %H:%M']
+        self.fields['arrival_time'].widget.attrs = {'class': 'form-control', 'id': 'id_arrival_time', 'autocomplete': 'off'}
         self.fields['owner_num_passengers'].widget.attrs['class'] = 'form-control'
         self.fields['special_request'].widget.attrs['class'] = 'form-control'
 
@@ -117,6 +118,7 @@ class RideDetailForm(forms.ModelForm):
                                                     'placeholder': 'Ride is waiting to be confirmed'}
         self.fields['ride_plate'].widget.attrs = {'readonly': 'readonly', 'class': 'form-control', 'autocomplete': 'off',
                                               'placeholder': 'Ride is waiting to be confirmed'}
+        self.fields['owner_num_passengers'].validators=[validate_positive]
         self.fields['driver'].required = False
         self.fields['owner_email'].required = False
         self.fields['headcount'].required = False

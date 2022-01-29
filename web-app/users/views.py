@@ -308,6 +308,9 @@ def ride_request(request):
             ride_passenger.role = 'owner'
             ride_passenger.save()
             message = 'success'
+        else:
+            message = 'Passenger number must be positive!'
+            return render(request, 'users/ride_request.html', locals())
         return redirect('users:index')
     else:
         ride_request_form = forms.RideRequestForm()
@@ -375,7 +378,7 @@ def ride_detail(request, slug):
                 else:
                     ride.owner_num_passengers = old_owner_num_passengers
                 # ride.arrival_time = old_arrival_time if dest_addr ==
-                ride.arrival_time = old_arrival_time
+                #ride.arrival_time = old_arrival_time
                 ride.sharable = sharable
                 ride.special_request = special_request
                 ride.save()
@@ -383,6 +386,8 @@ def ride_detail(request, slug):
                 message = 'save change successfully!'
                 # update the data in the front end
                 party_number = owner_num_passengers
+            else:
+                message = "Passenger number must be positive!"
         elif "cancel_order" in request.POST:
             # TODO: notify sharers and remove them
             # owner leave, remove records
