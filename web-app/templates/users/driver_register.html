@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+{% load static %}
+{% load bootstrap5 %}
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login Page</title>
+</head>
+
+<body>
+    <section class="vh-100">
+        <div>
+            <div class="container-fluid h-custom">
+                <p class="h2 text-center">Let's be a proud driver</p>
+                <div class="row d-flex justify-content-center align-items-center h-100">
+                    <div class="col-md-9 col-lg-6 col-xl-3">
+                        <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.webp"
+                            class="img-fluid" alt="Sample image">
+                    </div>
+                    <div class="col-md-8 col-lg-6 col-xl-4 offset-xl-0">
+
+                        <form action="{% url 'users:driver_register' %}" method="post">
+                            {% csrf_token %}
+                            {% if error_message %}
+                            <div id="message" class="alert alert-primary" data-dismiss="alert">
+                                {{error_message}}
+                            </div>
+                            {% endif %}
+                            <div class="form-outline mb-4">
+                                {{ register_driver_form.name.label }}
+                                {{ register_driver_form.name }}
+                            </div>
+
+                            <div class="form-outline mb-3">
+                                {{ register_driver_form.plate.label }}
+                                {{ register_driver_form.plate }}
+                            </div>
+
+                            <div class="form-outline mb-3">
+                                {{ register_driver_form.vehicle_type.label }}
+                                {{ register_driver_form.vehicle_type }}
+                            </div>
+
+                            <div class="form-outline mb-3">
+                                {{ register_driver_form.num_passengers.label }}
+                                {{ register_driver_form.num_passengers }}
+                            </div>
+
+                            <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4 btn-toolbar">
+                                <a href="{% url 'users:profile' %}">
+                                    <button type="button" class="btn btn-secondary btn-lg">Back to Profile
+                                    </button>
+                                </a>
+                                <button onclick="myFunction()" type="submit" class="btn btn-primary  ms-2">confirm</button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script>
+        $('#message').delay(1000).fadeOut('slow');
+    </script>
+</body>
+
+</html>
+
