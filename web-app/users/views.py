@@ -13,6 +13,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.db.models import Q
+from django.db import transaction
 
 import uuid
 
@@ -207,7 +208,7 @@ def index(request):
         special_vehicle_info = vehicle.special_vehicle_info
         rides_able_to_claim = Ride.objects.filter(Q(vehicle_type="") | Q(vehicle_type=vehicle_type)).filter(
             num_passengers__lte=max_num_passengers, status='open').filter(
-                Q(special_request="") | Q(special_request = special_vehicle_info)).exclude(Q(owner_email=request.session['email']) | Q(ride_id__in=rides_belong_to_ride_id))
+                Q(special_request="") | Q(special_request=special_vehicle_info)).exclude(Q(owner_email=request.session['email']) | Q(ride_id__in=rides_belong_to_ride_id))
 
     return render(request, 'users/index.html', {'confirmed_rides': confirmed_rides, 'joinable_rides': joinable_rides, 'rides_belong_to': rides_belong_to, 'vehicle': vehicle, 'rides_able_to_claim': rides_able_to_claim})
 
@@ -235,6 +236,7 @@ def login(request):
     return render(request, 'users/login.html', locals())
 
 
+@transaction.atomic
 def register(request):
     # if 'email' in request.session:
     #     return redirect('/index')
@@ -367,12 +369,13 @@ def ride_detail(request, slug):
                     if dest_addr == old_dest_addr and arrival_time == old_arrival_time and owner_num_passengers == old_owner_num_passengers and special_request == old_special_request:
                         message = 'Nothing changed!'
                         return render(request, 'users/ride_detail.html', locals())
-                    else:   #make changes, need to cancle ride for share
-                        #notify the share of cancling their ride
+                    else:  # make changes, need to cancle ride for share
+                        # notify the share of cancling their ride
                         ride.num_passengers = owner_num_passengers
                         send_mail_cancle(slug)
-                        #delete corresponding data in ride_passenger table
-                        Ride_Passenger.objects.filter(ride_id = slug, role = 'sharer').delete()
+                        # delete corresponding data in ride_passenger table
+                        Ride_Passenger.objects.filter(
+                            ride_id=slug, role='sharer').delete()
                     print(owner_num_passengers, ride.owner_num_passengers)
                     ride.owner_num_passengers = owner_num_passengers
                 else:
@@ -478,7 +481,8 @@ def confirm_ride_detail(request, slug):
 
 
 def send_mail(ride_id):
-    email_list = [i[0] for i in Ride_Passenger.objects.filter(ride_id = ride_id).values_list('email')]
+    email_list = [i[0] for i in Ride_Passenger.objects.filter(
+        ride_id=ride_id).values_list('email')]
     subject = 'Your ride[] has been confirmed!'
     text_content = 'Your ride has been confirmed! Please go to the pick-up loaction on time.'
     html_content = '''
@@ -492,8 +496,10 @@ def send_mail(ride_id):
     msg.send()
     return HttpResponse({'status': '邮件已经发送成功！'})
 
+
 def send_mail_cancle(ride_id):
-    email_list = [i[0] for i in Ride_Passenger.objects.filter(ride_id = ride_id, role = 'sharer').values_list('email')]
+    email_list = [i[0] for i in Ride_Passenger.objects.filter(
+        ride_id=ride_id, role='sharer').values_list('email')]
     subject = 'Your ride has been cancled!'
     text_content = 'Your ride has been cancled!'
     html_content = '''
