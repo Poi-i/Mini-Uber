@@ -376,16 +376,14 @@ def ride_detail(request, slug):
                         # delete corresponding data in ride_passenger table
                         Ride_Passenger.objects.filter(
                             ride_id=slug, role='sharer').delete()
-                    print(owner_num_passengers, ride.owner_num_passengers)
                     ride.owner_num_passengers = owner_num_passengers
                 else:
                     ride.owner_num_passengers = old_owner_num_passengers
                 # ride.arrival_time = old_arrival_time if dest_addr ==
-                #ride.arrival_time = old_arrival_time
+                # ride.arrival_time = old_arrival_time
                 ride.sharable = sharable
                 ride.special_request = special_request
                 ride.save()
-                print(ride.owner_num_passengers)
                 message = 'save change successfully!'
                 # update the data in the front end
                 party_number = owner_num_passengers
@@ -434,6 +432,10 @@ def ride_detail(request, slug):
                     message = 'join successfully!'
                     # update the data in the front end
                 party_number = owner_num_passengers
+            else:
+                message = "Passenger number must be positive!"
+                joined =  False
+                return render(request, 'users/ride_detail.html', locals())
         elif "complete" in request.POST:
             ride.status = "complete"
             ride.save()
