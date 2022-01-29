@@ -14,6 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.db.models import Q
 from django.db import transaction
+from django.utils import timezone
 
 import uuid
 
@@ -106,11 +107,6 @@ def edit_profile(request):
             vehicle.save()
             message = 'Save successfully'
             return render(request, 'users/edit_profile.html', locals())
-        elif not edit_profile_form.is_valid():
-            edit_profile_form = forms.EditProfileForm(
-                initial={'email': user.email, 'firstname': user.firstname, 'lastname': user.lastname})
-            message = "Passenger number should be positive"
-            return render(request, 'users/edit_profile.html', locals())
     else:
         edit_profile_form = forms.EditProfileForm(
             initial={'email': user.email, 'firstname': user.firstname, 'lastname': user.lastname})
@@ -159,8 +155,6 @@ def driver_register(request):
             user.save()
             message = "You are a driver now!"
             return render(request, 'users/profile.html', locals())
-        else:
-            error_message = "passenger number should be positive"
     else:
         register_driver_form = forms.VehicleForm()
     return render(request, 'users/driver_register.html', locals())
@@ -295,6 +289,9 @@ def ride_request(request):
             ride = Ride()
             ride.owner_email = request.session['email']
             ride.dest_addr = dest_addr
+            if arrival_time < timezone.now():
+                message = 'Arrival time must later than present!'
+                return render(request, 'users/ride_request.html', locals())
             ride.arrival_time = arrival_time
             ride.sharable = True if sharable == 'yes' else False
             ride.vehicle_type = vehicle_type if vehicle_type != None else ''
@@ -310,9 +307,6 @@ def ride_request(request):
             ride_passenger.role = 'owner'
             ride_passenger.save()
             message = 'success'
-        else:
-            message = 'Passenger number must be positive!'
-            return render(request, 'users/ride_request.html', locals())
         return redirect('users:index')
     else:
         ride_request_form = forms.RideRequestForm()
@@ -356,6 +350,14 @@ def ride_detail(request, slug):
                 special_request = ride_detail_form.cleaned_data['special_request']
                 # if the party number has changed, we update the whole num_pasengers
                 # and we update the ride_passenger table
+                if owner_num_passengers == None or arrival_time == None or dest_addr == '':
+                    message = 'You need to fill all required field!'
+                    ride_detail_form = forms.RideDetailForm(
+                        initial={'ride_id': ride.ride_id, 'owner_email': ride.owner_email, 'dest_addr': old_dest_addr, 'arrival_time': old_arrival_time,
+                                'ride_plate': ride.ride_plate, 'sharable': ride.sharable, 'status': ride.status, 'create_date': ride.create_date,
+                                'num_passengers': old_owner_num_passengers, 'owner_num_passengers': party_number, 'driver': ride.driver, 'vehicle_type': ride.vehicle_type,
+                                'special_request': ride.special_request})
+                    return render(request, 'users/ride_detail.html', locals())
                 if party_number != owner_num_passengers:
                     ride.num_passengers += (owner_num_passengers -
                                             party_number)
@@ -371,6 +373,9 @@ def ride_detail(request, slug):
                         return render(request, 'users/ride_detail.html', locals())
                     else:  # make changes, need to cancle ride for share
                         # notify the share of cancling their ride
+                        if arrival_time < timezone.now():
+                            message = 'Arrival time must later than present!'
+                            return render(request, 'users/ride_detail.html', locals())
                         ride.num_passengers = owner_num_passengers
                         send_mail_cancle(slug)
                         # delete corresponding data in ride_passenger table
@@ -388,7 +393,8 @@ def ride_detail(request, slug):
                 # update the data in the front end
                 party_number = owner_num_passengers
             else:
-                message = "Passenger number must be positive!"
+                message = 'Please input correct date format!'
+                return render(request, 'users/ride_detail.html', locals())
         elif "cancel_order" in request.POST:
             # TODO: notify sharers and remove them
             # owner leave, remove records
@@ -409,7 +415,15 @@ def ride_detail(request, slug):
                 ride_detail_form.save(commit=False)
                 # get data from the form
                 owner_num_passengers = ride_detail_form.cleaned_data['owner_num_passengers']
-
+                if owner_num_passengers == None:
+                    joined = False
+                    message = 'You need to fill all required field!'
+                    ride_detail_form = forms.RideDetailForm(
+                        initial={'ride_id': ride.ride_id, 'owner_email': ride.owner_email, 'dest_addr': old_dest_addr, 'arrival_time': old_arrival_time,
+                                'ride_plate': ride.ride_plate, 'sharable': ride.sharable, 'status': ride.status, 'create_date': ride.create_date,
+                                'num_passengers': old_owner_num_passengers, 'owner_num_passengers': party_number, 'driver': ride.driver, 'vehicle_type': ride.vehicle_type,
+                                'special_request': ride.special_request})
+                    return render(request, 'users/ride_detail.html', locals())
                 if owner_num_passengers <= 0:
                     message = "passenger number has to be bigger than 0"
                     joined = False
@@ -430,18 +444,6 @@ def ride_detail(request, slug):
                     message = 'join successfully!'
                     # update the data in the front end
                 party_number = owner_num_passengers
-            else:
-                message = "Passenger number must be positive!"
-                joined =  False
-                ride.arrival_time = old_arrival_time
-                ride.dest_addr = old_dest_addr
-                ride.sharable = sharable
-                ride_detail_form = forms.RideDetailForm(
-                    initial={'ride_id': ride.ride_id, 'owner_email': ride.owner_email, 'dest_addr': ride.dest_addr, 'arrival_time': ride.arrival_time,
-                            'ride_plate': ride.ride_plate, 'sharable': ride.sharable, 'status': ride.status, 'create_date': ride.create_date,
-                            'num_passengers': ride.num_passengers, 'owner_num_passengers': party_number, 'driver': ride.driver, 'vehicle_type': ride.vehicle_type,
-                            'special_request': ride.special_request})
-                return render(request, 'users/ride_detail.html',{'ride': ride, 'ride_detail_form': ride_detail_form, 'message': message, 'joined': joined})
         elif "complete" in request.POST:
             ride.status = "complete"
             ride.save()
