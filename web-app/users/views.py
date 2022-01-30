@@ -388,12 +388,11 @@ def ride_detail(request, slug):
                         if arrival_time < timezone.now():
                             message = 'Please input a valid datetime!'
                             return render(request, 'users/ride_detail.html', locals())
-                        # ride.num_passengers = owner_num_passengers
                         if dest_addr != old_dest_addr or arrival_time != old_arrival_time:
                             send_mail_cancle(slug)
-                        # delete corresponding data in ride_passenger table
                             Ride_Passenger.objects.filter(
                                 ride_id=slug, role='sharer').delete()
+                            ride.num_passengers = owner_num_passengers
                     ride.owner_num_passengers = owner_num_passengers
                 else:  # the role is the sharer
                     ride.arrival_time = old_arrival_time
