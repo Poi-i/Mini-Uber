@@ -318,6 +318,7 @@ def ride_detail(request, slug):
         return redirect('/index')
     ride = get_object_or_404(Ride, ride_id=slug)
     message = ""
+    old_ride = get_object_or_404(Ride, ride_id=slug)
     # get old owner_num_passengers of the ride
     old_owner_num_passengers = ride.owner_num_passengers
     # get sharable status
@@ -350,14 +351,22 @@ def ride_detail(request, slug):
                 special_request = ride_detail_form.cleaned_data['special_request']
                 # if the party number has changed, we update the whole num_pasengers
                 # and we update the ride_passenger table
-                if owner_num_passengers == None or arrival_time == None or dest_addr == '':
+                if (ride.owner_email == request.session['email'] and (owner_num_passengers == None or arrival_time == None or dest_addr == '')) or (ride.owner_email != request.session['email'] and owner_num_passengers == None):
+                    ride.sharable = old_ride.sharable
+                    ride.arrival_time = old_arrival_time
+                    ride.dest_addr = old_dest_addr
+                    ride.owner_num_passengers = old_owner_num_passengers
+                    ride.num_passengers = old_ride.num_passengers
                     message = 'You need to fill all required field!'
+                    sharers = Ride_Passenger.objects.filter(
+                        ride_id=ride.ride_id).exclude(email=ride.owner_email) if ride.sharable else None
                     ride_detail_form = forms.RideDetailForm(
                         initial={'ride_id': ride.ride_id, 'owner_email': ride.owner_email, 'dest_addr': old_dest_addr, 'arrival_time': old_arrival_time,
-                                'ride_plate': ride.ride_plate, 'sharable': ride.sharable, 'status': ride.status, 'create_date': ride.create_date,
-                                'num_passengers': old_owner_num_passengers, 'owner_num_passengers': party_number, 'driver': ride.driver, 'vehicle_type': ride.vehicle_type,
-                                'special_request': ride.special_request})
+                                 'ride_plate': ride.ride_plate, 'sharable': ride.sharable, 'status': ride.status, 'create_date': ride.create_date,
+                                 'num_passengers': ride.num_passengers, 'owner_num_passengers': party_number, 'driver': ride.driver, 'vehicle_type': ride.vehicle_type,
+                                 'special_request': ride.special_request})
                     return render(request, 'users/ride_detail.html', locals())
+
                 if party_number != owner_num_passengers:
                     ride.num_passengers += (owner_num_passengers -
                                             party_number)
@@ -370,19 +379,36 @@ def ride_detail(request, slug):
                 if request.session['email'] == ride.owner_email:
                     if dest_addr == old_dest_addr and arrival_time == old_arrival_time and owner_num_passengers == old_owner_num_passengers and special_request == old_special_request:
                         message = 'Nothing changed!'
+                        ride.sharable = sharable
+                        sharers = Ride_Passenger.objects.filter(
+                            ride_id=ride.ride_id).exclude(email=ride.owner_email) if ride.sharable else None
                         return render(request, 'users/ride_detail.html', locals())
                     else:  # make changes, need to cancle ride for share
                         # notify the share of cancling their ride
                         if arrival_time < timezone.now():
-                            message = 'Arrival time must later than present!'
+                            message = 'Please input a valid datetime!'
                             return render(request, 'users/ride_detail.html', locals())
-                        ride.num_passengers = owner_num_passengers
-                        send_mail_cancle(slug)
+                        # ride.num_passengers = owner_num_passengers
+                        if dest_addr != old_dest_addr or arrival_time != old_arrival_time:
+                            send_mail_cancle(slug)
                         # delete corresponding data in ride_passenger table
-                        Ride_Passenger.objects.filter(
-                            ride_id=slug, role='sharer').delete()
+                            Ride_Passenger.objects.filter(
+                                ride_id=slug, role='sharer').delete()
                     ride.owner_num_passengers = owner_num_passengers
-                else:
+                else:  # the role is the sharer
+                    ride.arrival_time = old_arrival_time
+                    ride.dest_addr = old_dest_addr
+                    if owner_num_passengers == party_number:
+                        message = 'Nothing changed!!'
+                        ride.sharable = old_ride.sharable
+                        sharers = Ride_Passenger.objects.filter(
+                            ride_id=ride.ride_id).exclude(email=ride.owner_email) if ride.sharable else None
+                        ride_detail_form = forms.RideDetailForm(
+                            initial={'ride_id': ride.ride_id, 'owner_email': ride.owner_email, 'dest_addr': ride.dest_addr, 'arrival_time': ride.arrival_time,
+                                     'ride_plate': ride.ride_plate, 'sharable': old_ride.sharable, 'status': ride.status, 'create_date': ride.create_date,
+                                     'num_passengers': ride.num_passengers, 'owner_num_passengers': party_number, 'driver': ride.driver, 'vehicle_type': ride.vehicle_type,
+                                     'special_request': ride.special_request})
+                        return render(request, 'users/ride_detail.html', {'ride': ride, 'ride_detail_form': ride_detail_form, 'message': message, 'sharers': sharers, 'joined': joined})
                     ride.owner_num_passengers = old_owner_num_passengers
                 # ride.arrival_time = old_arrival_time if dest_addr ==
                 # ride.arrival_time = old_arrival_time
@@ -393,7 +419,7 @@ def ride_detail(request, slug):
                 # update the data in the front end
                 party_number = owner_num_passengers
             else:
-                message = 'Please input correct date format!'
+                message = 'Please input a valid datetime!'
                 return render(request, 'users/ride_detail.html', locals())
         elif "cancel_order" in request.POST:
             # TODO: notify sharers and remove them
@@ -418,11 +444,13 @@ def ride_detail(request, slug):
                 if owner_num_passengers == None:
                     joined = False
                     message = 'You need to fill all required field!'
+                    sharers = Ride_Passenger.objects.filter(
+                        ride_id=ride.ride_id).exclude(email=ride.owner_email) if ride.sharable else None
                     ride_detail_form = forms.RideDetailForm(
                         initial={'ride_id': ride.ride_id, 'owner_email': ride.owner_email, 'dest_addr': old_dest_addr, 'arrival_time': old_arrival_time,
-                                'ride_plate': ride.ride_plate, 'sharable': ride.sharable, 'status': ride.status, 'create_date': ride.create_date,
-                                'num_passengers': old_owner_num_passengers, 'owner_num_passengers': party_number, 'driver': ride.driver, 'vehicle_type': ride.vehicle_type,
-                                'special_request': ride.special_request})
+                                 'ride_plate': ride.ride_plate, 'sharable': ride.sharable, 'status': ride.status, 'create_date': ride.create_date,
+                                 'num_passengers': old_owner_num_passengers, 'owner_num_passengers': party_number, 'driver': ride.driver, 'vehicle_type': ride.vehicle_type,
+                                 'special_request': ride.special_request})
                     return render(request, 'users/ride_detail.html', locals())
                 if owner_num_passengers <= 0:
                     message = "passenger number has to be bigger than 0"
@@ -447,7 +475,6 @@ def ride_detail(request, slug):
         elif "complete" in request.POST:
             ride.status = "complete"
             ride.save()
-
     sharers = Ride_Passenger.objects.filter(
         ride_id=ride.ride_id).exclude(email=ride.owner_email) if ride.sharable else None
     ride_detail_form = forms.RideDetailForm(

@@ -38,7 +38,7 @@ class VehicleForm(forms.Form):
     vehicle_type = forms.CharField(
         label='Vehice Type', required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
     num_passengers = forms.IntegerField( validators=[validate_positive],
-        label='Number of passengers', required=True, widget=forms.NumberInput(attrs={'class': 'form-control'}))
+        label='Number of passengers', required=True, widget=forms.NumberInput(attrs={'class': 'form-control','type':'number', 'min':'1'}))
     plate = forms.CharField(label='Plate', required=True, widget=forms.TextInput(
         attrs={'class': 'form-control'}))
     special_vehicle_info = forms.CharField(label='Special vehicle info (optional)', required=False, widget=forms.TextInput(
